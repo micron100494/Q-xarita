@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qashqadaryo Xarita</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <style>
+    :root { --bg:#f3f6fb; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#dbe2ea; --accent:#2563eb; --accent2:#16a34a; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--text); background:var(--bg); }
+    header { padding:12px 14px; background:rgba(255,255,255,.96); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:1000; backdrop-filter: blur(10px); }
+    h1 { margin:0 0 10px; font-size:20px; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; }
+    select, input, button { padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:14px; }
+    button { cursor:pointer; }
+    .wrap { display:flex; flex-direction:column; gap:12px; padding:12px; }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+    .hint { color:var(--muted); font-size:13px; margin-top:6px; }
+    #map { width:100%; height:72vh; border-radius:16px; overflow:hidden; }
+    .stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .badge { display:inline-block; background:#eff6ff; color:#1d4ed8; padding:6px 10px; border-radius:999px; font-size:12px; margin-right:6px; }
+    .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; }
+    .legend span { display:inline-flex; align-items:center; gap:6px; }
+    .dot { width:12px; height:12px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,.18); }
+    .leaflet-popup-content { font-size:14px; line-height:1.45; }
+    .leaflet-control-layers { border-radius:12px !important; overflow:hidden; }
+    .offline-note { color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:8px 10px; border-radius:12px; font-size:13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Qashqadaryo viloyati xaritasi</h1>
+    <div class="controls">
+      <select id="districtSelect"><option value="">Tuman tanlang</option></select>
+      <input id="searchInput" placeholder="Mahalla nomi bo‘yicha qidiruv" />
+      <button id="resetBtn">Tozalash</button>
+      <button id="satBtn" type="button">Sun’iy yo‘ldosh</button>
+    </div>
+    <div class="hint">Google xaritaga o‘xshash ko‘rinish uchun onlayn fon xarita qo‘shildi. Internet bo‘lmasa faqat hudud qatlamlari ko‘rinadi.</div>
+  </header>
+  <div class="wrap">
+    <div class="panel">
+      <div class="stats">
+        <span class="badge" id="districtCount"></span>
+        <span class="badge" id="mahallaCount"></span>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:#3b82f6"></i>Tuman chegarasi</span>
+        <span><i class="dot" style="background:#22c55e"></i>MFY</span>
+      </div>
+      <div class="hint">Tumanni tanlasangiz shu hududga yaqinlashadi. Mahallani qidirib topish mumkin.</div>
+    </div>
+    <div id="map" class="panel"></div>
+    <div class="panel" id="info">
+      <strong>Ma’lumot</strong>
+      <div class="hint">Xaritadagi hududni bossangiz ma’lumot chiqadi.</div>
+    </div>
+    <div class="offline-note">Aniq Google Maps’ning o‘zini ilovaga qo‘shish uchun Google Maps API kalit kerak bo‘ladi. Hozirgi variant esa ko‘rinishi o‘xshash bo‘lgan onlayn xarita qatlamlari bilan ishlaydi.</div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script>
+    const { boundary, districts, mahallas } = window.APP_DATA;
+    const info = document.getElementById('info');
+    const districtSelect = document.getElementById('districtSelect');
+    const searchInput = document.getElementById('searchInput');
+    const districtCount = document.getElementById('districtCount');
+    const mahallaCount = document.getElementById('mahallaCount');
+    const resetBtn = document.getElementById('resetBtn');
+    const satBtn = document.getElementById('satBtn');
+
+    districtCount.textContent = `Tumanlar: ${districts.features.length}`;
+    mahallaCount.textContent = `MFYlar: ${mahallas.features.length}`;
+
+    const map = L.map('map', { zoomControl: true, preferCanvas: true });
+
+    const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    });
+
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri'
+    });
+
+    const light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    const baseLayers = {
+      'Oddiy xarita': streets,
+      'Yengil xarita': light,
+      'Sun’iy yo‘ldosh': satellite,
+    };
+
+    L.control.layers(baseLayers, null, { collapsed: true }).addTo(map);
+
+    function setInfo(html) {
+      info.innerHTML = `<strong>Ma’lumot</strong><div style="margin-top:8px">${html}</div>`;
+    }
+
+    const districtStyle = {
+      color: '#2563eb',
+      weight: 2,
+      fillColor: '#60a5fa',
+      fillOpacity: 0.16
+    };
+
+    function districtFeatureStyle(feature) {
+      return districtStyle;
+    }
+
+    function mahallaFeatureStyle(feature) {
+      return {
+        color: '#16a34a',
+        weight: 1,
+        fillColor: '#4ade80',
+        fillOpacity: 0.18
+      };
+    }
+
+    const boundaryLayer = L.geoJSON(boundary, {
+      style: { color:'#0f172a', weight: 3, fill:false, opacity:0.9 }
+    }).addTo(map);
+
+    let currentDistrict = '';
+    let filteredMahallas = null;
+    let selectedMahallaLayer = null;
+
+    const districtLayer = L.geoJSON(districts, {
+      style: districtFeatureStyle,
+      onEachFeature: (feature, layer) => {
+        const name = feature.properties.district;
+        layer.bindPopup(`<b>${name}</b>`);
+        layer.on({
+          click: () => focusDistrict(name),
+          mouseover: () => layer.setStyle({ fillOpacity: 0.28, weight: 3 }),
+          mouseout: () => {
+            if (currentDistrict !== name) districtLayer.resetStyle(layer);
+          }
+        });
+      }
+    }).addTo(map);
+
+    const allMahallaLayer = L.geoJSON(mahallas, {
+      style: mahallaFeatureStyle,
+      onEachFeature: (feature, layer) => {
+        const p = feature.properties;
+        layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
+        layer.on('click', () => focusMahallaLayer(layer, feature));
+      }
+    }).addTo(map);
+
+    map.fitBounds(boundaryLayer.getBounds(), { padding: [12,12] });
+
+    const districtNames = districts.features.map(f => f.properties.district).sort((a,b) => a.localeCompare(b,'uz'));
+    districtNames.forEach(name => {
+      const o = document.createElement('option');
+      o.value = name;
+      o.textContent = name;
+      districtSelect.appendChild(o);
+    });
+
+    function styleDistrictSelection() {
+      districtLayer.eachLayer(layer => {
+        const name = layer.feature.properties.district;
+        if (name === currentDistrict) {
+          layer.setStyle({ color:'#1d4ed8', weight:3, fillOpacity:0.30 });
+          layer.bringToFront();
+        } else {
+          districtLayer.resetStyle(layer);
+        }
+      });
+      boundaryLayer.bringToFront();
+      if (filteredMahallas) filteredMahallas.bringToFront();
+    }
+
+    function renderMahallas(filterFn = null) {
+      if (filteredMahallas) map.removeLayer(filteredMahallas);
+      const data = {
+        type: 'FeatureCollection',
+        features: mahallas.features.filter(f => !filterFn || filterFn(f))
+      };
+      filteredMahallas = L.geoJSON(data, {
+        style: mahallaFeatureStyle,
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
+          layer.on('click', () => focusMahallaLayer(layer, feature));
+        }
+      }).addTo(map);
+      if (data.features.length === 0) {
+        setInfo('<b>Qidiruv natijasi topilmadi</b>');
+      }
+      styleDistrictSelection();
+    }
+
+    function focusDistrict(name) {
+      currentDistrict = name;
+      districtSelect.value = name;
+      selectedMahallaLayer = null;
+      renderMahallas(f => f.properties.district === name && matchesSearch(f));
+      const chosen = districts.features.find(f => f.properties.district === name);
+      if (chosen) {
+        const layer = districtLayer.getLayers().find(l => l.feature.properties.district === name);
+        if (layer) map.fitBounds(layer.getBounds(), { padding: [20,20] });
+      }
+      const count = mahallas.features.filter(f => f.properties.district === name).length;
+      setInfo(`<div><b>${name}</b></div><div>MFY soni: ${count}</div><div class="hint">Mahallani bossangiz batafsil ma’lumot chiqadi.</div>`);
+      styleDistrictSelection();
+    }
+
+    function focusMahallaLayer(layer, feature) {
+      if (selectedMahallaLayer) {
+        selectedMahallaLayer.setStyle(mahallaFeatureStyle(selectedMahallaLayer.feature));
+      }
+      selectedMahallaLayer = layer;
+      layer.setStyle({ color:'#15803d', weight:2.5, fillOpacity:0.38 });
+      layer.bringToFront();
+      const p = feature.properties;
+      setInfo(`<div><b>${p.mahalla_no}</b></div><div>Tuman: ${p.district}</div><div>ID: ${p.mahalla_id}</div>`);
+      map.fitBounds(layer.getBounds(), { padding: [24,24] });
+      layer.openPopup();
+    }
+
+    function matchesSearch(feature) {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) return true;
+      return String(feature.properties.mahalla_no || '').toLowerCase().includes(q);
+    }
+
+    function applySearch() {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) {
+        if (currentDistrict) focusDistrict(currentDistrict);
+        else resetAll();
+        return;
+      }
+      renderMahallas(f => (!currentDistrict || f.properties.district === currentDistrict) && matchesSearch(f));
+      const first = mahallas.features.find(f => (!currentDistrict || f.properties.district === currentDistrict) && matchesSearch(f));
+      if (first) {
+        const layer = filteredMahallas.getLayers().find(l => String(l.feature.properties.mahalla_id) === String(first.properties.mahalla_id));
+        if (layer) focusMahallaLayer(layer, first);
+      } else {
+        setInfo('<b>Qidiruv natijasi topilmadi</b>');
+      }
+    }
+
+    districtSelect.addEventListener('change', e => {
+      if (e.target.value) focusDistrict(e.target.value);
+      else resetAll();
+    });
+
+    searchInput.addEventListener('input', applySearch);
+
+    resetBtn.addEventListener('click', resetAll);
+
+    satBtn.addEventListener('click', () => {
+      if (map.hasLayer(streets)) map.removeLayer(streets);
+      if (map.hasLayer(light)) map.removeLayer(light);
+      if (!map.hasLayer(satellite)) satellite.addTo(map);
+    });
+
+    function resetAll() {
+      currentDistrict = '';
+      districtSelect.value = '';
+      searchInput.value = '';
+      selectedMahallaLayer = null;
+      if (filteredMahallas) map.removeLayer(filteredMahallas);
+      allMahallaLayer.addTo(map);
+      filteredMahallas = allMahallaLayer;
+      districtLayer.eachLayer(layer => districtLayer.resetStyle(layer));
+      map.fitBounds(boundaryLayer.getBounds(), { padding: [12,12] });
+      setInfo('<div class="hint">Xaritadagi hududni bossangiz ma’lumot chiqadi.</div>');
+      boundaryLayer.bringToFront();
+    }
+
+    resetAll();
+  </script>
+</body>
+</html>
