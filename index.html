@@ -6,70 +6,154 @@
   <title>Qashqadaryo Xarita</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <style>
-    :root { --bg:#f3f6fb; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#dbe2ea; --accent:#2563eb; --accent2:#16a34a; }
+    :root { --bg:#f3f6fb; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#dbe2ea; --accent:#2563eb; --accent2:#16a34a; --danger:#dc2626; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--text); background:var(--bg); }
     header { padding:12px 14px; background:rgba(255,255,255,.96); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:1000; backdrop-filter: blur(10px); }
     h1 { margin:0 0 10px; font-size:20px; }
-    .controls { display:flex; gap:10px; flex-wrap:wrap; }
-    select, input, button { padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:14px; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    select, input, button { padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; color:var(--text); }
+    input { min-width: 180px; }
     button { cursor:pointer; }
-    .wrap { display:flex; flex-direction:column; gap:12px; padding:12px; }
-    .panel { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+    button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.primary:hover { filter: brightness(1.05); }
+    button.success { background:var(--accent2); color:#fff; border-color:var(--accent2); }
+    button.success:hover { filter: brightness(1.05); }
+    button.danger { background:var(--danger); color:#fff; border-color:var(--danger); }
+    button.ghost { background:#f8fafc; }
+    .wrap { padding:12px; }
+    .layout { display:grid; grid-template-columns: 1fr 340px; gap:12px; align-items:start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
     .hint { color:var(--muted); font-size:13px; margin-top:6px; }
-    #map { width:100%; height:72vh; border-radius:16px; overflow:hidden; }
+    #map { width:100%; height:72vh; min-height:520px; border-radius:14px; overflow:hidden; }
     .stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-    .badge { display:inline-block; background:#eff6ff; color:#1d4ed8; padding:6px 10px; border-radius:999px; font-size:12px; margin-right:6px; }
-    .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; }
+    .badge { display:inline-block; background:#eff6ff; color:#1d4ed8; padding:6px 10px; border-radius:999px; font-size:12px; }
+    .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; align-items:center; }
     .legend span { display:inline-flex; align-items:center; gap:6px; }
     .dot { width:12px; height:12px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,.18); }
+    .dot.round { border-radius:50%; }
     .leaflet-popup-content { font-size:14px; line-height:1.45; }
     .leaflet-control-layers { border-radius:12px !important; overflow:hidden; }
-    .offline-note { color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:8px 10px; border-radius:12px; font-size:13px; }
+    .offline-note { color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:8px 10px; border-radius:12px; font-size:13px; margin-top:10px; }
+    .right h3 { margin:0 0 8px; font-size:15px; }
+    .toolbar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+    .toolbar button { padding:7px 10px; font-size:13px; }
+    .ep-filter { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-bottom:6px; }
+    #entryList { list-style:none; padding:0; margin:0; max-height: 56vh; overflow:auto; display:flex; flex-direction:column; gap:8px; }
+    .ep-item { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fbfdff; }
+    .ep-item .ep-name { font-weight:600; font-size:14px; }
+    .ep-item .ep-meta { color:var(--muted); font-size:12px; margin-top:2px; word-break: break-word; }
+    .ep-item .ep-coords { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; margin-top:2px; color:#0f172a; }
+    .ep-item .ep-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+    .ep-item .ep-actions button { padding:5px 9px; font-size:12px; border-radius:8px; }
+    .ep-item.auto { background:#fff7ed; }
+    .small { font-size:12px; color:var(--muted); }
+    .row { display:flex; gap:6px; flex-wrap:wrap; }
+    .nominatim-results { margin-top:6px; max-height: 180px; overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff; display:none; }
+    .nominatim-results.open { display:block; }
+    .nominatim-item { padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13px; }
+    .nominatim-item:hover { background:#f1f5f9; }
+    .nominatim-item:last-child { border-bottom:none; }
+    .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background:#0f172a; color:#fff; padding:10px 14px; border-radius:10px; font-size:13px; z-index:2000; box-shadow:0 6px 24px rgba(0,0,0,.25); display:none; }
+    .toast.show { display:block; }
+    .ep-marker { background:#dc2626; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #dc2626; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Qashqadaryo viloyati xaritasi</h1>
+    <h1>Qashqadaryo viloyati xaritasi — kirish joylari</h1>
     <div class="controls">
-      <select id="districtSelect"><option value="">Tuman tanlang</option></select>
-      <input id="searchInput" placeholder="Mahalla nomi bo‘yicha qidiruv" />
-      <button id="resetBtn">Tozalash</button>
-      <button id="satBtn" type="button">Sun’iy yo‘ldosh</button>
+      <select id="districtSelect" title="Tuman tanlang"><option value="">Tuman tanlang</option></select>
+      <input id="mahallaSearch" placeholder="Mahalla nomi bo'yicha qidiruv" />
+      <input id="streetSearch" placeholder="Ko'cha (Nominatim)" />
+      <button id="streetSearchBtn" type="button">Ko'cha topish</button>
+      <button id="autoEntryBtn" class="success" type="button" title="Tanlangan mahalla uchun yo'l-chegara kesishishlarini topish">Kirish joylarini aniqlash</button>
+      <button id="exportXlsxBtn" class="primary" type="button">Excelga yuklash</button>
+      <button id="bulkExportBtn" class="primary" type="button" title="Har bir mahalla chegarasidan 20 tadan nuqta hisoblab Excelga yuklash">Hamma mahalladan 20 ta nuqta</button>
+      <button id="clearEntriesBtn" class="danger" type="button">Hammasini o'chirish</button>
+      <button id="resetBtn" class="ghost" type="button">Tozalash</button>
+      <button id="satBtn" class="ghost" type="button">Sun'iy yo'ldosh</button>
     </div>
-    <div class="hint">Google xaritaga o‘xshash ko‘rinish uchun onlayn fon xarita qo‘shildi. Internet bo‘lmasa faqat hudud qatlamlari ko‘rinadi.</div>
+    <div id="streetResults" class="nominatim-results"></div>
+    <div class="hint">Tuman/mahallani tanlang. So'ng "Kirish joylarini aniqlash"ni bosing yoki xaritada to'g'ridan-to'g'ri bosib qo'lda nuqta qo'shing.</div>
   </header>
+
   <div class="wrap">
-    <div class="panel">
-      <div class="stats">
-        <span class="badge" id="districtCount"></span>
-        <span class="badge" id="mahallaCount"></span>
+    <div class="layout">
+      <div>
+        <div class="panel">
+          <div class="stats">
+            <span class="badge" id="districtCount"></span>
+            <span class="badge" id="mahallaCount"></span>
+            <span class="badge" id="entryCount">Kirish joylari: 0</span>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background:#3b82f6"></i>Tuman chegarasi</span>
+            <span><i class="dot" style="background:#22c55e"></i>MFY (mahalla)</span>
+            <span><i class="dot round" style="background:#dc2626"></i>Kirish joyi (qo'lda)</span>
+            <span><i class="dot round" style="background:#f97316"></i>Kirish joyi (avtomatik)</span>
+          </div>
+          <div class="hint">Mahallani tanlash uchun xaritada yoki ro'yxatdan tanlang. Xaritani bossangiz, nuqta avtomatik mahalla bilan bog'lanadi.</div>
+        </div>
+
+        <div id="map" class="panel" style="margin-top:12px"></div>
+
+        <div class="panel" id="info" style="margin-top:12px">
+          <strong>Ma'lumot</strong>
+          <div class="hint">Xaritadagi hududni bossangiz batafsil ma'lumot chiqadi.</div>
+        </div>
+
+        <div class="offline-note">Nominatim va Overpass API'lari OpenStreetMap ma'lumotlaridan foydalanadi (bepul, internet kerak). Yo'l ma'lumotlari to'liq bo'lmasligi mumkin — natijalarni ko'rib chiqib, kerak bo'lsa qo'lda tahrirlang.</div>
       </div>
-      <div class="legend">
-        <span><i class="dot" style="background:#3b82f6"></i>Tuman chegarasi</span>
-        <span><i class="dot" style="background:#22c55e"></i>MFY</span>
-      </div>
-      <div class="hint">Tumanni tanlasangiz shu hududga yaqinlashadi. Mahallani qidirib topish mumkin.</div>
+
+      <aside class="panel right">
+        <h3>Kirish joylari ro'yxati</h3>
+        <div class="toolbar">
+          <button id="toggleAddMode" type="button" class="primary">Bosib qo'shish: ON</button>
+          <button id="copyAllBtn" type="button" class="ghost">CSV nusxalash</button>
+        </div>
+        <label class="ep-filter">
+          <input type="checkbox" id="filterCurrent" />
+          Faqat tanlangan mahalla
+        </label>
+        <ul id="entryList"></ul>
+        <div class="hint" id="entryListEmptyHint">Hozir nuqtalar yo'q. "Kirish joylarini aniqlash" tugmasini bosing yoki xaritani bosing.</div>
+      </aside>
     </div>
-    <div id="map" class="panel"></div>
-    <div class="panel" id="info">
-      <strong>Ma’lumot</strong>
-      <div class="hint">Xaritadagi hududni bossangiz ma’lumot chiqadi.</div>
-    </div>
-    <div class="offline-note">Aniq Google Maps’ning o‘zini ilovaga qo‘shish uchun Google Maps API kalit kerak bo‘ladi. Hozirgi variant esa ko‘rinishi o‘xshash bo‘lgan onlayn xarita qatlamlari bilan ishlaydi.</div>
   </div>
 
+  <div id="toast" class="toast"></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="data.js"></script>
   <script>
+  (function () {
+    const STORAGE_KEY = 'qash_entry_points_v1';
     const { boundary, districts, mahallas } = window.APP_DATA;
+
     const info = document.getElementById('info');
     const districtSelect = document.getElementById('districtSelect');
-    const searchInput = document.getElementById('searchInput');
-    const districtCount = document.getElementById('districtCount');
-    const mahallaCount = document.getElementById('mahallaCount');
+    const mahallaSearch = document.getElementById('mahallaSearch');
+    const streetSearch = document.getElementById('streetSearch');
+    const streetSearchBtn = document.getElementById('streetSearchBtn');
+    const streetResults = document.getElementById('streetResults');
+    const autoEntryBtn = document.getElementById('autoEntryBtn');
+    const exportXlsxBtn = document.getElementById('exportXlsxBtn');
+    const clearEntriesBtn = document.getElementById('clearEntriesBtn');
     const resetBtn = document.getElementById('resetBtn');
     const satBtn = document.getElementById('satBtn');
+    const districtCount = document.getElementById('districtCount');
+    const mahallaCount = document.getElementById('mahallaCount');
+    const entryCount = document.getElementById('entryCount');
+    const entryList = document.getElementById('entryList');
+    const entryListEmptyHint = document.getElementById('entryListEmptyHint');
+    const toggleAddModeBtn = document.getElementById('toggleAddMode');
+    const filterCurrentCb = document.getElementById('filterCurrent');
+    const copyAllBtn = document.getElementById('copyAllBtn');
+    const toast = document.getElementById('toast');
 
     districtCount.textContent = `Tumanlar: ${districts.features.length}`;
     mahallaCount.textContent = `MFYlar: ${mahallas.features.length}`;
@@ -80,57 +164,44 @@
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap'
     });
-
     const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Tiles &copy; Esri'
     });
-
     const light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxZoom: 20,
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
+      subdomains: 'abcd', maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
-    const baseLayers = {
+    L.control.layers({
       'Oddiy xarita': streets,
       'Yengil xarita': light,
-      'Sun’iy yo‘ldosh': satellite,
-    };
-
-    L.control.layers(baseLayers, null, { collapsed: true }).addTo(map);
+      "Sun'iy yo'ldosh": satellite,
+    }, null, { collapsed: true }).addTo(map);
 
     function setInfo(html) {
-      info.innerHTML = `<strong>Ma’lumot</strong><div style="margin-top:8px">${html}</div>`;
+      info.innerHTML = `<strong>Ma'lumot</strong><div style="margin-top:8px">${html}</div>`;
     }
 
-    const districtStyle = {
-      color: '#2563eb',
-      weight: 2,
-      fillColor: '#60a5fa',
-      fillOpacity: 0.16
-    };
-
-    function districtFeatureStyle(feature) {
-      return districtStyle;
+    function showToast(msg, ms = 2200) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), ms);
     }
 
-    function mahallaFeatureStyle(feature) {
-      return {
-        color: '#16a34a',
-        weight: 1,
-        fillColor: '#4ade80',
-        fillOpacity: 0.18
-      };
+    const districtStyle = { color: '#2563eb', weight: 2, fillColor: '#60a5fa', fillOpacity: 0.16 };
+    function districtFeatureStyle() { return districtStyle; }
+    function mahallaFeatureStyle() {
+      return { color: '#16a34a', weight: 1, fillColor: '#4ade80', fillOpacity: 0.18 };
     }
 
-    const boundaryLayer = L.geoJSON(boundary, {
-      style: { color:'#0f172a', weight: 3, fill:false, opacity:0.9 }
-    }).addTo(map);
+    const boundaryLayer = L.geoJSON(boundary, { style: { color:'#0f172a', weight: 3, fill:false, opacity:0.9 } }).addTo(map);
 
     let currentDistrict = '';
-    let filteredMahallas = null;
+    let filteredMahallasLayer = null;
     let selectedMahallaLayer = null;
+    let selectedMahallaFeature = null;
+    let addMode = true;
 
     const districtLayer = L.geoJSON(districts, {
       style: districtFeatureStyle,
@@ -140,9 +211,7 @@
         layer.on({
           click: () => focusDistrict(name),
           mouseover: () => layer.setStyle({ fillOpacity: 0.28, weight: 3 }),
-          mouseout: () => {
-            if (currentDistrict !== name) districtLayer.resetStyle(layer);
-          }
+          mouseout: () => { if (currentDistrict !== name) districtLayer.resetStyle(layer); }
         });
       }
     }).addTo(map);
@@ -152,7 +221,7 @@
       onEachFeature: (feature, layer) => {
         const p = feature.properties;
         layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
-        layer.on('click', () => focusMahallaLayer(layer, feature));
+        layer.on('click', (e) => { focusMahallaLayer(layer, feature); L.DomEvent.stopPropagation(e); });
       }
     }).addTo(map);
 
@@ -161,8 +230,7 @@
     const districtNames = districts.features.map(f => f.properties.district).sort((a,b) => a.localeCompare(b,'uz'));
     districtNames.forEach(name => {
       const o = document.createElement('option');
-      o.value = name;
-      o.textContent = name;
+      o.value = name; o.textContent = name;
       districtSelect.appendChild(o);
     });
 
@@ -177,26 +245,29 @@
         }
       });
       boundaryLayer.bringToFront();
-      if (filteredMahallas) filteredMahallas.bringToFront();
+      if (filteredMahallasLayer) filteredMahallasLayer.bringToFront();
+      entryMarkersLayer.bringToFront();
     }
 
     function renderMahallas(filterFn = null) {
-      if (filteredMahallas) map.removeLayer(filteredMahallas);
+      if (filteredMahallasLayer && filteredMahallasLayer !== allMahallaLayer) {
+        map.removeLayer(filteredMahallasLayer);
+      } else if (filteredMahallasLayer === allMahallaLayer) {
+        map.removeLayer(allMahallaLayer);
+      }
       const data = {
         type: 'FeatureCollection',
         features: mahallas.features.filter(f => !filterFn || filterFn(f))
       };
-      filteredMahallas = L.geoJSON(data, {
+      filteredMahallasLayer = L.geoJSON(data, {
         style: mahallaFeatureStyle,
         onEachFeature: (feature, layer) => {
           const p = feature.properties;
           layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
-          layer.on('click', () => focusMahallaLayer(layer, feature));
+          layer.on('click', (e) => { focusMahallaLayer(layer, feature); L.DomEvent.stopPropagation(e); });
         }
       }).addTo(map);
-      if (data.features.length === 0) {
-        setInfo('<b>Qidiruv natijasi topilmadi</b>');
-      }
+      if (data.features.length === 0) setInfo('<b>Qidiruv natijasi topilmadi</b>');
       styleDistrictSelection();
     }
 
@@ -204,38 +275,39 @@
       currentDistrict = name;
       districtSelect.value = name;
       selectedMahallaLayer = null;
+      selectedMahallaFeature = null;
       renderMahallas(f => f.properties.district === name && matchesSearch(f));
-      const chosen = districts.features.find(f => f.properties.district === name);
-      if (chosen) {
-        const layer = districtLayer.getLayers().find(l => l.feature.properties.district === name);
-        if (layer) map.fitBounds(layer.getBounds(), { padding: [20,20] });
-      }
+      const layer = districtLayer.getLayers().find(l => l.feature.properties.district === name);
+      if (layer) map.fitBounds(layer.getBounds(), { padding: [20,20] });
       const count = mahallas.features.filter(f => f.properties.district === name).length;
-      setInfo(`<div><b>${name}</b></div><div>MFY soni: ${count}</div><div class="hint">Mahallani bossangiz batafsil ma’lumot chiqadi.</div>`);
+      setInfo(`<div><b>${name}</b></div><div>MFY soni: ${count}</div><div class="hint">Mahallani bossangiz batafsil ma'lumot chiqadi.</div>`);
       styleDistrictSelection();
+      renderEntries();
     }
 
     function focusMahallaLayer(layer, feature) {
       if (selectedMahallaLayer) {
-        selectedMahallaLayer.setStyle(mahallaFeatureStyle(selectedMahallaLayer.feature));
+        try { selectedMahallaLayer.setStyle(mahallaFeatureStyle(selectedMahallaLayer.feature)); } catch (_) {}
       }
       selectedMahallaLayer = layer;
+      selectedMahallaFeature = feature;
       layer.setStyle({ color:'#15803d', weight:2.5, fillOpacity:0.38 });
       layer.bringToFront();
       const p = feature.properties;
-      setInfo(`<div><b>${p.mahalla_no}</b></div><div>Tuman: ${p.district}</div><div>ID: ${p.mahalla_id}</div>`);
+      setInfo(`<div><b>${p.mahalla_no}</b></div><div>Tuman: ${p.district}</div><div>ID: ${p.mahalla_id}</div><div class="hint">Endi "Kirish joylarini aniqlash" tugmasini bosing yoki xaritada bosib nuqta qo'shing.</div>`);
       map.fitBounds(layer.getBounds(), { padding: [24,24] });
       layer.openPopup();
+      renderEntries();
     }
 
     function matchesSearch(feature) {
-      const q = searchInput.value.trim().toLowerCase();
+      const q = mahallaSearch.value.trim().toLowerCase();
       if (!q) return true;
       return String(feature.properties.mahalla_no || '').toLowerCase().includes(q);
     }
 
-    function applySearch() {
-      const q = searchInput.value.trim().toLowerCase();
+    function applyMahallaSearch() {
+      const q = mahallaSearch.value.trim().toLowerCase();
       if (!q) {
         if (currentDistrict) focusDistrict(currentDistrict);
         else resetAll();
@@ -244,22 +316,17 @@
       renderMahallas(f => (!currentDistrict || f.properties.district === currentDistrict) && matchesSearch(f));
       const first = mahallas.features.find(f => (!currentDistrict || f.properties.district === currentDistrict) && matchesSearch(f));
       if (first) {
-        const layer = filteredMahallas.getLayers().find(l => String(l.feature.properties.mahalla_id) === String(first.properties.mahalla_id));
+        const layer = filteredMahallasLayer.getLayers().find(l => String(l.feature.properties.mahalla_id) === String(first.properties.mahalla_id));
         if (layer) focusMahallaLayer(layer, first);
-      } else {
-        setInfo('<b>Qidiruv natijasi topilmadi</b>');
-      }
+      } else setInfo('<b>Qidiruv natijasi topilmadi</b>');
     }
 
     districtSelect.addEventListener('change', e => {
       if (e.target.value) focusDistrict(e.target.value);
       else resetAll();
     });
-
-    searchInput.addEventListener('input', applySearch);
-
+    mahallaSearch.addEventListener('input', applyMahallaSearch);
     resetBtn.addEventListener('click', resetAll);
-
     satBtn.addEventListener('click', () => {
       if (map.hasLayer(streets)) map.removeLayer(streets);
       if (map.hasLayer(light)) map.removeLayer(light);
@@ -269,18 +336,450 @@
     function resetAll() {
       currentDistrict = '';
       districtSelect.value = '';
-      searchInput.value = '';
+      mahallaSearch.value = '';
       selectedMahallaLayer = null;
-      if (filteredMahallas) map.removeLayer(filteredMahallas);
-      allMahallaLayer.addTo(map);
-      filteredMahallas = allMahallaLayer;
+      selectedMahallaFeature = null;
+      if (filteredMahallasLayer && filteredMahallasLayer !== allMahallaLayer) map.removeLayer(filteredMahallasLayer);
+      if (!map.hasLayer(allMahallaLayer)) allMahallaLayer.addTo(map);
+      filteredMahallasLayer = allMahallaLayer;
       districtLayer.eachLayer(layer => districtLayer.resetStyle(layer));
       map.fitBounds(boundaryLayer.getBounds(), { padding: [12,12] });
-      setInfo('<div class="hint">Xaritadagi hududni bossangiz ma’lumot chiqadi.</div>');
+      setInfo('<div class="hint">Xaritadagi hududni bossangiz ma\'lumot chiqadi.</div>');
       boundaryLayer.bringToFront();
+      renderEntries();
     }
 
+    // ---------------- Entry points ----------------
+    let entryPoints = [];
+    try { entryPoints = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch (_) { entryPoints = []; }
+
+    const entryMarkersLayer = L.layerGroup().addTo(map);
+
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+    function saveEntries() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entryPoints)); }
+
+    function findMahallaAt(lat, lng) {
+      const pt = turf.point([lng, lat]);
+      for (const f of mahallas.features) {
+        try {
+          if (turf.booleanPointInPolygon(pt, f)) {
+            return { district: f.properties.district, mahalla: f.properties.mahalla_no, mahalla_id: f.properties.mahalla_id };
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    function makeEntryIcon(source) {
+      const color = source === 'auto' ? '#f97316' : '#dc2626';
+      const html = `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px ${color},0 1px 4px rgba(0,0,0,.3)"></div>`;
+      return L.divIcon({ html, className: 'ep-marker-icon', iconSize: [18,18], iconAnchor: [9,9] });
+    }
+
+    function renderEntries() {
+      entryMarkersLayer.clearLayers();
+      const filtered = filterCurrentCb.checked && selectedMahallaFeature
+        ? entryPoints.filter(e => String(e.mahalla_id) === String(selectedMahallaFeature.properties.mahalla_id))
+        : entryPoints;
+      for (const ep of filtered) {
+        const marker = L.marker([ep.lat, ep.lng], { icon: makeEntryIcon(ep.source) });
+        marker.bindPopup(
+          `<b>${escapeHtml(ep.name)}</b><br>` +
+          `Tuman: ${escapeHtml(ep.district || '-')}<br>` +
+          `Mahalla: ${escapeHtml(ep.mahalla || '-')}<br>` +
+          `<span style="font-family:ui-monospace,Menlo,Consolas,monospace">${ep.lat.toFixed(6)}, ${ep.lng.toFixed(6)}</span><br>` +
+          `<small>Manba: ${ep.source === 'auto' ? 'avtomatik' : "qo'lda"}</small>`
+        );
+        marker.addTo(entryMarkersLayer);
+      }
+      entryCount.textContent = `Kirish joylari: ${entryPoints.length}` + (filterCurrentCb.checked && selectedMahallaFeature ? ` (ko'rinmoqda: ${filtered.length})` : '');
+
+      entryList.innerHTML = '';
+      entryListEmptyHint.style.display = filtered.length === 0 ? 'block' : 'none';
+      for (const ep of filtered) {
+        const li = document.createElement('li');
+        li.className = 'ep-item' + (ep.source === 'auto' ? ' auto' : '');
+        const nameDiv = document.createElement('div'); nameDiv.className = 'ep-name'; nameDiv.textContent = ep.name;
+        const meta = document.createElement('div'); meta.className = 'ep-meta';
+        meta.textContent = `${ep.district || '-'} / ${ep.mahalla || '-'}`;
+        const coords = document.createElement('div'); coords.className = 'ep-coords';
+        coords.textContent = `${ep.lat.toFixed(6)}, ${ep.lng.toFixed(6)}`;
+        const actions = document.createElement('div'); actions.className = 'ep-actions';
+        const showBtn = document.createElement('button'); showBtn.textContent = "Ko'rsat"; showBtn.className = 'ghost';
+        showBtn.onclick = () => { map.setView([ep.lat, ep.lng], 17); };
+        const editBtn = document.createElement('button'); editBtn.textContent = 'Tahrir'; editBtn.className = 'ghost';
+        editBtn.onclick = () => {
+          const newName = prompt('Nuqta nomi:', ep.name);
+          if (newName !== null && newName.trim() !== '') { ep.name = newName.trim(); saveEntries(); renderEntries(); }
+        };
+        const delBtn = document.createElement('button'); delBtn.textContent = "O'chirish"; delBtn.className = 'danger';
+        delBtn.onclick = () => {
+          if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
+          entryPoints = entryPoints.filter(x => x.id !== ep.id); saveEntries(); renderEntries();
+        };
+        actions.append(showBtn, editBtn, delBtn);
+        li.append(nameDiv, meta, coords, actions);
+        entryList.appendChild(li);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    map.on('click', e => {
+      if (!addMode) return;
+      const { lat, lng } = e.latlng;
+      const m = findMahallaAt(lat, lng);
+      let defaultName = 'Kirish';
+      if (m) defaultName = `${m.mahalla} — kirish`;
+      const name = prompt('Nuqta nomi (ixtiyoriy):', defaultName);
+      if (name === null) return;
+      entryPoints.push({
+        id: uid(),
+        name: (name || defaultName).trim() || defaultName,
+        lat, lng,
+        district: m ? m.district : '',
+        mahalla: m ? m.mahalla : '',
+        mahalla_id: m ? m.mahalla_id : '',
+        source: 'manual'
+      });
+      saveEntries();
+      renderEntries();
+    });
+
+    toggleAddModeBtn.addEventListener('click', () => {
+      addMode = !addMode;
+      toggleAddModeBtn.textContent = `Bosib qo'shish: ${addMode ? 'ON' : 'OFF'}`;
+      toggleAddModeBtn.classList.toggle('primary', addMode);
+      toggleAddModeBtn.classList.toggle('ghost', !addMode);
+    });
+
+    filterCurrentCb.addEventListener('change', renderEntries);
+
+    clearEntriesBtn.addEventListener('click', () => {
+      if (entryPoints.length === 0) { showToast('Ro\'yxat allaqachon bo\'sh.'); return; }
+      const onlyCurrent = filterCurrentCb.checked && selectedMahallaFeature;
+      const target = onlyCurrent
+        ? `tanlangan mahalla (${selectedMahallaFeature.properties.mahalla_no})`
+        : 'BARCHA';
+      if (!confirm(`${target} kirish joylarini o'chirishni tasdiqlaysizmi?`)) return;
+      if (onlyCurrent) {
+        entryPoints = entryPoints.filter(e => String(e.mahalla_id) !== String(selectedMahallaFeature.properties.mahalla_id));
+      } else {
+        entryPoints = [];
+      }
+      saveEntries();
+      renderEntries();
+    });
+
+    copyAllBtn.addEventListener('click', async () => {
+      const list = filterCurrentCb.checked && selectedMahallaFeature
+        ? entryPoints.filter(e => String(e.mahalla_id) === String(selectedMahallaFeature.properties.mahalla_id))
+        : entryPoints;
+      if (list.length === 0) { showToast('Ro\'yxat bo\'sh.'); return; }
+      const header = ['№','Tuman','Mahalla','Mahalla ID','Nuqta nomi','Lat','Lng','Manba'];
+      const rows = list.map((ep,i) => [i+1, ep.district, ep.mahalla, ep.mahalla_id, ep.name, ep.lat, ep.lng, ep.source==='auto'?'avtomatik':"qo'lda"]);
+      const csv = [header, ...rows].map(r => r.map(v => {
+        const s = String(v == null ? '' : v);
+        return /[",;\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(';')).join('\n');
+      try { await navigator.clipboard.writeText(csv); showToast('CSV nusxalandi.'); }
+      catch (_) { showToast('Nusxalash muvaffaqiyatsiz.'); }
+    });
+
+    // ---------------- Auto entry detection ----------------
+    autoEntryBtn.addEventListener('click', autoDetectEntries);
+
+    async function autoDetectEntries() {
+      if (!selectedMahallaFeature) {
+        showToast('Avval mahallani tanlang (xaritada bosing yoki ro\'yxatdan tanlang).');
+        return;
+      }
+      const mahallaFeature = selectedMahallaFeature;
+      autoEntryBtn.disabled = true;
+      const prevText = autoEntryBtn.textContent;
+      autoEntryBtn.textContent = 'Yuklanmoqda...';
+      setInfo(`<i>${escapeHtml(mahallaFeature.properties.mahalla_no)} uchun yo'llar olinmoqda...</i>`);
+
+      try {
+        const bbox = turf.bbox(mahallaFeature);
+        const south = bbox[1], west = bbox[0], north = bbox[3], east = bbox[2];
+        const query = `[out:json][timeout:30];(way["highway"](${south},${west},${north},${east}););out geom tags;`;
+        const resp = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'data=' + encodeURIComponent(query)
+        });
+        if (!resp.ok) throw new Error('Overpass HTTP ' + resp.status);
+        const data = await resp.json();
+        const ways = (data.elements || []).filter(el => el.type === 'way' && Array.isArray(el.geometry) && el.geometry.length >= 2);
+
+        let boundaryLine;
+        try { boundaryLine = turf.polygonToLine(mahallaFeature); }
+        catch (_) {
+          const coords = mahallaFeature.geometry.type === 'Polygon'
+            ? mahallaFeature.geometry.coordinates[0]
+            : mahallaFeature.geometry.coordinates[0][0];
+          boundaryLine = turf.lineString(coords.map(c => [c[0], c[1]]));
+        }
+        if (boundaryLine.type === 'FeatureCollection') boundaryLine = boundaryLine.features[0];
+
+        const candidates = [];
+        for (const w of ways) {
+          const coords = w.geometry.map(g => [g.lon, g.lat]);
+          if (coords.length < 2) continue;
+          let line;
+          try { line = turf.lineString(coords); } catch (_) { continue; }
+          let inter;
+          try { inter = turf.lineIntersect(line, boundaryLine); } catch (_) { continue; }
+          for (const f of (inter.features || [])) {
+            const [lng, lat] = f.geometry.coordinates;
+            const roadName = w.tags && (w.tags.name || w.tags['name:uz'] || w.tags['name:ru'] || w.tags['name:en']) || '';
+            candidates.push({ lat, lng, roadName, hwy: w.tags && w.tags.highway });
+          }
+        }
+
+        // Deduplicate near points (~5m)
+        const dedup = [];
+        for (const p of candidates) {
+          const exists = dedup.some(q => Math.abs(q.lat - p.lat) < 5e-5 && Math.abs(q.lng - p.lng) < 5e-5);
+          if (!exists) dedup.push(p);
+        }
+
+        let added = 0;
+        for (const p of dedup) {
+          // Skip if a near auto-point already exists for this mahalla
+          const dup = entryPoints.some(ep => ep.source === 'auto'
+            && String(ep.mahalla_id) === String(mahallaFeature.properties.mahalla_id)
+            && Math.abs(ep.lat - p.lat) < 5e-5 && Math.abs(ep.lng - p.lng) < 5e-5);
+          if (dup) continue;
+          entryPoints.push({
+            id: uid(),
+            name: p.roadName ? `Kirish (${p.roadName})` : `Kirish (${p.hwy || 'yo\'l'})`,
+            lat: p.lat, lng: p.lng,
+            district: mahallaFeature.properties.district,
+            mahalla: mahallaFeature.properties.mahalla_no,
+            mahalla_id: mahallaFeature.properties.mahalla_id,
+            source: 'auto'
+          });
+          added++;
+        }
+        saveEntries();
+        renderEntries();
+        setInfo(`<b>${escapeHtml(mahallaFeature.properties.mahalla_no)}</b>: ${added} ta kirish joyi avtomatik aniqlandi (jami nomzodlar: ${dedup.length}).`);
+        showToast(`${added} ta nuqta qo'shildi.`);
+      } catch (err) {
+        console.error(err);
+        setInfo(`<b style="color:#dc2626">Xato:</b> ${escapeHtml(err.message || String(err))}`);
+        showToast('Yuklab bo\'lmadi: ' + (err.message || err));
+      } finally {
+        autoEntryBtn.disabled = false;
+        autoEntryBtn.textContent = prevText;
+      }
+    }
+
+    // ---------------- Excel export ----------------
+    exportXlsxBtn.addEventListener('click', () => {
+      if (entryPoints.length === 0) { showToast('Eksport qilish uchun kamida bitta nuqta kerak.'); return; }
+      const list = filterCurrentCb.checked && selectedMahallaFeature
+        ? entryPoints.filter(e => String(e.mahalla_id) === String(selectedMahallaFeature.properties.mahalla_id))
+        : entryPoints;
+      if (list.length === 0) { showToast('Tanlangan filtrda nuqta yo\'q.'); return; }
+      const rows = list.map((ep, i) => ({
+        '№': i + 1,
+        'Tuman': ep.district || '',
+        'Mahalla': ep.mahalla || '',
+        'Mahalla ID': ep.mahalla_id || '',
+        'Nuqta nomi': ep.name || '',
+        'Lat': ep.lat,
+        'Lng': ep.lng,
+        'Google Maps': `https://www.google.com/maps?q=${ep.lat},${ep.lng}`,
+        'Manba': ep.source === 'auto' ? 'avtomatik' : "qo'lda"
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [{wch:5},{wch:22},{wch:28},{wch:14},{wch:30},{wch:12},{wch:12},{wch:42},{wch:10}];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Kirish joylari');
+      const ts = new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+      XLSX.writeFile(wb, `qashqadaryo_kirish_joylari_${ts}.xlsx`);
+      showToast(`${list.length} ta yozuv eksport qilindi.`);
+    });
+
+    // ---------------- Bulk: 20 boundary points per mahalla ----------------
+    const bulkExportBtn = document.getElementById('bulkExportBtn');
+
+    function stripAlt(coords) { return coords.map(ring => ring.map(c => [c[0], c[1]])); }
+    function asTurfPoly(feature) {
+      try {
+        if (feature.geometry.type === 'Polygon') return turf.polygon(stripAlt(feature.geometry.coordinates), feature.properties);
+        if (feature.geometry.type === 'MultiPolygon') return turf.multiPolygon(feature.geometry.coordinates.map(stripAlt), feature.properties);
+      } catch (_) {}
+      return null;
+    }
+    function longestBoundaryLine(feature) {
+      const poly = asTurfPoly(feature);
+      if (!poly) return null;
+      let lines;
+      try {
+        const fc = turf.polygonToLine(poly);
+        lines = fc.type === 'FeatureCollection' ? fc.features : [fc];
+      } catch (_) { return null; }
+      let best = null, bestLen = -1;
+      for (const ln of lines) {
+        if (ln.geometry.type === 'MultiLineString') {
+          for (const seg of ln.geometry.coordinates) {
+            const segLine = turf.lineString(seg);
+            const len = turf.length(segLine, { units: 'kilometers' });
+            if (len > bestLen) { bestLen = len; best = segLine; }
+          }
+        } else if (ln.geometry.type === 'LineString') {
+          const len = turf.length(ln, { units: 'kilometers' });
+          if (len > bestLen) { bestLen = len; best = ln; }
+        }
+      }
+      return best ? { line: best, length: bestLen } : null;
+    }
+    function samplePerimeter(feature, n) {
+      const r = longestBoundaryLine(feature);
+      if (!r) return [];
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const d = (i / n) * r.length;
+        try {
+          const pt = turf.along(r.line, d, { units: 'kilometers' });
+          pts.push({ lng: pt.geometry.coordinates[0], lat: pt.geometry.coordinates[1] });
+        } catch (_) {}
+      }
+      return pts;
+    }
+
+    bulkExportBtn.addEventListener('click', () => {
+      const N = 20;
+      const total = mahallas.features.length;
+      if (!confirm(`${total} ta mahalla x ${N} = ${total*N} ta nuqta hisoblanadi va Excelga yuklanadi. Davom etilsinmi?`)) return;
+      bulkExportBtn.disabled = true;
+      const prev = bulkExportBtn.textContent;
+      bulkExportBtn.textContent = 'Hisoblanmoqda...';
+      // Defer to next tick so the UI repaints
+      setTimeout(() => {
+        try {
+          const rows = [];
+          let idx = 0, skipped = 0;
+          const t0 = performance.now();
+          for (const f of mahallas.features) {
+            const p = f.properties || {};
+            const district = p.district || '';
+            const mahalla = p.mahalla_no || '';
+            const mid = p.mahalla_id || '';
+            const pts = samplePerimeter(f, N);
+            if (pts.length === 0) {
+              skipped++;
+              try {
+                const c = turf.centroid(asTurfPoly(f) || f).geometry.coordinates;
+                rows.push({
+                  '№': ++idx, 'Tuman': district, 'Mahalla': mahalla, 'Mahalla ID': mid,
+                  'Nuqta №': 1, 'Nuqta nomi': `${mahalla} — markaz`,
+                  'Lat': +c[1].toFixed(6), 'Lng': +c[0].toFixed(6),
+                  'Google Maps': `https://www.google.com/maps?q=${c[1].toFixed(6)},${c[0].toFixed(6)}`,
+                  'Manba': 'centroid'
+                });
+              } catch (_) {}
+              continue;
+            }
+            for (let i = 0; i < pts.length; i++) {
+              const pt = pts[i];
+              rows.push({
+                '№': ++idx, 'Tuman': district, 'Mahalla': mahalla, 'Mahalla ID': mid,
+                'Nuqta №': i + 1, 'Nuqta nomi': `${mahalla} — chegara nuqtasi ${i + 1}`,
+                'Lat': +pt.lat.toFixed(6), 'Lng': +pt.lng.toFixed(6),
+                'Google Maps': `https://www.google.com/maps?q=${pt.lat.toFixed(6)},${pt.lng.toFixed(6)}`,
+                'Manba': 'perimetr-teng'
+              });
+            }
+          }
+          const dt = (performance.now() - t0).toFixed(0);
+          const ws = XLSX.utils.json_to_sheet(rows);
+          ws['!cols'] = [{wch:6},{wch:22},{wch:28},{wch:14},{wch:7},{wch:36},{wch:12},{wch:12},{wch:50},{wch:14}];
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Nuqtalar');
+          const ts = new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+          XLSX.writeFile(wb, `qashqadaryo_har_mahalladan_20_nuqta_${ts}.xlsx`);
+          showToast(`${rows.length} ta yozuv eksport qilindi (${dt}ms, o'tkazib yuborildi: ${skipped}).`, 4000);
+        } catch (e) {
+          console.error(e);
+          showToast('Xato: ' + (e.message || e));
+        } finally {
+          bulkExportBtn.disabled = false;
+          bulkExportBtn.textContent = prev;
+        }
+      }, 30);
+    });
+
+    // ---------------- Street search (Nominatim) ----------------
+    let streetSearchTimer = null;
+    let streetMarker = null;
+
+    function nominatimSearch(query) {
+      const viewbox = '63.5,39.6,67.5,37.7'; // Qashqadaryo approx (left,top,right,bottom)
+      const q = `${query}, Qashqadaryo, Uzbekistan`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=8&addressdetails=1&bounded=1&viewbox=${viewbox}&q=${encodeURIComponent(q)}`;
+      return fetch(url, { headers: { 'Accept-Language': 'uz' } }).then(r => r.json());
+    }
+
+    function showStreetResults(items) {
+      streetResults.innerHTML = '';
+      if (!items || items.length === 0) {
+        streetResults.innerHTML = '<div class="nominatim-item">Topilmadi</div>';
+        streetResults.classList.add('open');
+        return;
+      }
+      for (const it of items) {
+        const div = document.createElement('div');
+        div.className = 'nominatim-item';
+        div.textContent = it.display_name;
+        div.onclick = () => {
+          const lat = parseFloat(it.lat), lng = parseFloat(it.lon);
+          map.setView([lat, lng], 17);
+          if (streetMarker) map.removeLayer(streetMarker);
+          streetMarker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${escapeHtml(it.display_name)}</b>`).openPopup();
+          streetResults.classList.remove('open');
+        };
+        streetResults.appendChild(div);
+      }
+      streetResults.classList.add('open');
+    }
+
+    async function doStreetSearch() {
+      const q = streetSearch.value.trim();
+      if (!q) { streetResults.classList.remove('open'); return; }
+      try {
+        const items = await nominatimSearch(q);
+        showStreetResults(items);
+      } catch (e) {
+        showToast('Nominatim xato: ' + e.message);
+      }
+    }
+
+    streetSearchBtn.addEventListener('click', doStreetSearch);
+    streetSearch.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doStreetSearch(); } });
+    streetSearch.addEventListener('input', () => {
+      clearTimeout(streetSearchTimer);
+      const v = streetSearch.value.trim();
+      if (v.length < 3) { streetResults.classList.remove('open'); return; }
+      streetSearchTimer = setTimeout(doStreetSearch, 600);
+    });
+    document.addEventListener('click', (e) => {
+      if (!streetResults.contains(e.target) && e.target !== streetSearch && e.target !== streetSearchBtn) {
+        streetResults.classList.remove('open');
+      }
+    });
+
+    // ---------------- Init ----------------
     resetAll();
+    renderEntries();
+  })();
   </script>
 </body>
 </html>
