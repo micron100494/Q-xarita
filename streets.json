@@ -1,0 +1,840 @@
+{
+  "_comment": "Qashqadaryo viloyati ko'chalari va yo'l kodlari demo ma'lumotlari. Yangi ko'cha qo'shish uchun mahalla_id ni topib, ko'chalar massiviga element qo'shing.",
+  "_format": {
+    "streets_by_mahalla": "object — kalit: mahalla_id (string), qiymat: ko'chalar massivi",
+    "street_object": {
+      "name": "Ko'cha nomi (string)",
+      "road_code": "Yo'l kodi (string)"
+    }
+  },
+  "streets_by_mahalla": {
+    "1710242054": [
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "CHR-001"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "CHR-002"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "CHR-003"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "CHR-004"
+      }
+    ],
+    "1710242060": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "CHR-005"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "CHR-006"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "CHR-007"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "CHR-008"
+      }
+    ],
+    "1710242081": [
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "CHR-009"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "CHR-010"
+      }
+    ],
+    "1710212005": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "DHQ-001"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "DHQ-002"
+      }
+    ],
+    "1710212003": [
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "DHQ-003"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "DHQ-004"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "DHQ-005"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "DHQ-006"
+      }
+    ],
+    "1710212008": [
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "DHQ-007"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "DHQ-008"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "DHQ-009"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "DHQ-010"
+      }
+    ],
+    "1710234021": [
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "MBR-001"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "MBR-002"
+      }
+    ],
+    "1710234009": [
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "MBR-003"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "MBR-004"
+      }
+    ],
+    "1710234025": [
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "MBR-005"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "MBR-006"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "MBR-007"
+      }
+    ],
+    "1710220037": [
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "QMS-001"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "QMS-002"
+      }
+    ],
+    "1710220047": [
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "QMS-003"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "QMS-004"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "QMS-005"
+      }
+    ],
+    "1710220028": [
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "QMS-006"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "QMS-007"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "QMS-008"
+      }
+    ],
+    "1710240019": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "KKD-001"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "KKD-002"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "KKD-003"
+      }
+    ],
+    "1710240029": [
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "KKD-004"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "KKD-005"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "KKD-006"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "KKD-007"
+      }
+    ],
+    "1710240026": [
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "KKD-008"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "KKD-009"
+      }
+    ],
+    "1710401012": [
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "QSH-001"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "QSH-002"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "QSH-003"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "QSH-004"
+      }
+    ],
+    "1710401028": [
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "QSH-005"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "QSH-006"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "QSH-007"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "QSH-008"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "QSH-009"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "QSH-010"
+      }
+    ],
+    "1710401004": [
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "QSH-011"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "QSH-012"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "QSH-013"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "QSH-014"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "QSH-015"
+      }
+    ],
+    "1710401057": [
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "QSH-016"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "QSH-017"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "QSH-018"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "QSH-019"
+      }
+    ],
+    "1710401006": [
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "QSH-020"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "QSH-021"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "QSH-022"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "QSH-023"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "QSH-024"
+      }
+    ],
+    "1710224042": [
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "QRT-001"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "QRT-002"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "QRT-003"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "QRT-004"
+      }
+    ],
+    "1710224029": [
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "QRT-005"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "QRT-006"
+      }
+    ],
+    "1710224015": [
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "QRT-007"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "QRT-008"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "QRT-009"
+      }
+    ],
+    "1710405028": [
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "SHH-001"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "SHH-002"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHH-003"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "SHH-004"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "SHH-005"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "SHH-006"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "SHH-007"
+      }
+    ],
+    "1710405024": [
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHH-008"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "SHH-009"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "SHH-010"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "SHH-011"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "SHH-012"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "SHH-013"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "SHH-014"
+      }
+    ],
+    "1710405031": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "SHH-015"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "SHH-016"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "SHH-017"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHH-018"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "SHH-019"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "SHH-020"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "SHH-021"
+      }
+    ],
+    "1710405037": [
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "SHH-022"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHH-023"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "SHH-024"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "SHH-025"
+      }
+    ],
+    "1710405030": [
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "SHH-026"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "SHH-027"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "SHH-028"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "SHH-029"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "SHH-030"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHH-031"
+      }
+    ],
+    "1710245048": [
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "SHT-001"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "SHT-002"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "SHT-003"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "SHT-004"
+      }
+    ],
+    "1710245041": [
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "SHT-005"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "SHT-006"
+      }
+    ],
+    "1710245056": [
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "SHT-007"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "SHT-008"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "SHT-009"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "SHT-010"
+      }
+    ],
+    "1710207005": [
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "GZR-001"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "GZR-002"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "GZR-003"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "GZR-004"
+      }
+    ],
+    "1710207002": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "GZR-005"
+      },
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "GZR-006"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "GZR-007"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "GZR-008"
+      }
+    ],
+    "1710207050": [
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "GZR-009"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "GZR-010"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "GZR-011"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "GZR-012"
+      }
+    ],
+    "1710237024": [
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "KSB-001"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "KSB-002"
+      }
+    ],
+    "1710237025": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "KSB-003"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "KSB-004"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "KSB-005"
+      }
+    ],
+    "1710237012": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "KSB-006"
+      },
+      {
+        "name": "Qashqadaryo ko'chasi",
+        "road_code": "KSB-007"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "KSB-008"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "KSB-009"
+      }
+    ],
+    "1710229066": [
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "KSN-001"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "KSN-002"
+      }
+    ],
+    "1710229003": [
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "KSN-003"
+      },
+      {
+        "name": "Bog'iston ko'chasi",
+        "road_code": "KSN-004"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "KSN-005"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "KSN-006"
+      }
+    ],
+    "1710229015": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "KSN-007"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "KSN-008"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "KSN-009"
+      }
+    ],
+    "1710233017": [
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "MRS-001"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "MRS-002"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "MRS-003"
+      },
+      {
+        "name": "Beruniy ko'chasi",
+        "road_code": "MRS-004"
+      }
+    ],
+    "1710233026": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "MRS-005"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "MRS-006"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "MRS-007"
+      }
+    ],
+    "1710233010": [
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "MRS-008"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "MRS-009"
+      }
+    ],
+    "1710235037": [
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "NSH-001"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "NSH-002"
+      }
+    ],
+    "1710235026": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "NSH-003"
+      },
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "NSH-004"
+      }
+    ],
+    "1710235021": [
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "NSH-005"
+      },
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "NSH-006"
+      }
+    ],
+    "1710250024": [
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "YKB-001"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "YKB-002"
+      },
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "YKB-003"
+      }
+    ],
+    "1710250029": [
+      {
+        "name": "Amir Temur ko'chasi",
+        "road_code": "YKB-004"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "YKB-005"
+      },
+      {
+        "name": "Toshkent ko'chasi",
+        "road_code": "YKB-006"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "YKB-007"
+      }
+    ],
+    "1710250042": [
+      {
+        "name": "A. Qodiriy ko'chasi",
+        "road_code": "YKB-008"
+      },
+      {
+        "name": "Sohibqiron ko'chasi",
+        "road_code": "YKB-009"
+      },
+      {
+        "name": "Bobur ko'chasi",
+        "road_code": "YKB-010"
+      }
+    ],
+    "1710232019": [
+      {
+        "name": "Alisher Navoiy ko'chasi",
+        "road_code": "KTB-001"
+      },
+      {
+        "name": "Buxoro ko'chasi",
+        "road_code": "KTB-002"
+      }
+    ],
+    "1710232015": [
+      {
+        "name": "Yoshlik ko'chasi",
+        "road_code": "KTB-003"
+      },
+      {
+        "name": "Do'stlik ko'chasi",
+        "road_code": "KTB-004"
+      },
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "KTB-005"
+      }
+    ],
+    "1710232058": [
+      {
+        "name": "Ipak yo'li ko'chasi",
+        "road_code": "KTB-006"
+      },
+      {
+        "name": "Bunyodkor ko'chasi",
+        "road_code": "KTB-007"
+      },
+      {
+        "name": "Mustaqillik ko'chasi",
+        "road_code": "KTB-008"
+      }
+    ]
+  }
+}

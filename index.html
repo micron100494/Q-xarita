@@ -26,6 +26,25 @@
     .leaflet-popup-content { font-size:14px; line-height:1.45; }
     .leaflet-control-layers { border-radius:12px !important; overflow:hidden; }
     .offline-note { color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:8px 10px; border-radius:12px; font-size:13px; }
+
+    /* Streets / road codes */
+    .streets-block { margin-top:10px; }
+    .streets-block h4 { margin:0 0 8px; font-size:14px; color:var(--text); }
+    .streets-list { list-style:none; padding:0; margin:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    .streets-list li { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; font-size:13px; border-bottom:1px solid #f1f5f9; background:#fff; }
+    .streets-list li:last-child { border-bottom:none; }
+    .road-code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11px; font-weight:700; background:#dcfce7; color:#166534; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+    .empty-streets { color:var(--muted); font-size:13px; padding:8px 0; }
+    .add-street-form { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); }
+    .add-street-form input { flex:1; min-width:120px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:13px; }
+    .add-street-form button { background:var(--accent); color:#fff; border:none; }
+    .add-street-form button:hover { background:#1d4ed8; }
+    .add-street-form button.danger { background:#fff; color:#b91c1c; border:1px solid #fecaca; }
+    .delete-btn { background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:16px; line-height:1; padding:2px 6px; border-radius:4px; }
+    .delete-btn:hover { color:#dc2626; background:#fef2f2; }
+    details.legend-help { margin-top:8px; }
+    details.legend-help summary { cursor:pointer; color:var(--muted); font-size:12px; }
+    details.legend-help div { margin-top:6px; font-size:12px; color:var(--muted); }
   </style>
 </head>
 <body>
@@ -33,17 +52,18 @@
     <h1>Qashqadaryo viloyati xaritasi</h1>
     <div class="controls">
       <select id="districtSelect"><option value="">Tuman tanlang</option></select>
-      <input id="searchInput" placeholder="Mahalla nomi bo‘yicha qidiruv" />
+      <input id="searchInput" placeholder="Mahalla, ko‘cha yoki yo‘l kodi bo‘yicha qidiruv" />
       <button id="resetBtn">Tozalash</button>
       <button id="satBtn" type="button">Sun’iy yo‘ldosh</button>
     </div>
-    <div class="hint">Google xaritaga o‘xshash ko‘rinish uchun onlayn fon xarita qo‘shildi. Internet bo‘lmasa faqat hudud qatlamlari ko‘rinadi.</div>
+    <div class="hint">Mahalla, ko‘cha yoki yo‘l kodi bo‘yicha izlash mumkin. Qidiruv natijasi xaritada belgilanadi.</div>
   </header>
   <div class="wrap">
     <div class="panel">
       <div class="stats">
         <span class="badge" id="districtCount"></span>
         <span class="badge" id="mahallaCount"></span>
+        <span class="badge" id="streetCount"></span>
       </div>
       <div class="legend">
         <span><i class="dot" style="background:#3b82f6"></i>Tuman chegarasi</span>
@@ -63,16 +83,57 @@
   <script src="data.js"></script>
   <script>
     const { boundary, districts, mahallas } = window.APP_DATA;
+
+    // Streets / road codes data (loaded from streets.json).
+    // Keyed by mahalla_id (string). Each entry is an array of { name, road_code }.
+    let streetsByMahalla = {};
+    // User-added streets persisted in localStorage so demo edits survive refresh.
+    const LOCAL_KEY = 'qx_streets_local_v1';
+    let localStreets = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}');
     const info = document.getElementById('info');
     const districtSelect = document.getElementById('districtSelect');
     const searchInput = document.getElementById('searchInput');
     const districtCount = document.getElementById('districtCount');
     const mahallaCount = document.getElementById('mahallaCount');
+    const streetCount = document.getElementById('streetCount');
     const resetBtn = document.getElementById('resetBtn');
     const satBtn = document.getElementById('satBtn');
 
     districtCount.textContent = `Tumanlar: ${districts.features.length}`;
     mahallaCount.textContent = `MFYlar: ${mahallas.features.length}`;
+    streetCount.textContent = `Ko‘chalar: 0`;
+
+    function getStreetsFor(mfyId) {
+      const id = String(mfyId);
+      const fromFile = streetsByMahalla[id] || [];
+      const local = localStreets[id] || [];
+      return [...fromFile, ...local];
+    }
+
+    function totalStreetCount() {
+      const fileCount = Object.values(streetsByMahalla).reduce((a, arr) => a + arr.length, 0);
+      const localCount = Object.values(localStreets).reduce((a, arr) => a + arr.length, 0);
+      return fileCount + localCount;
+    }
+
+    function refreshStreetCount() {
+      streetCount.textContent = `Ko‘chalar: ${totalStreetCount()}`;
+    }
+
+    // Load streets.json (fetch can fail when opened directly via file://; degrade gracefully)
+    fetch('streets.json')
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('streets.json yuklanmadi')))
+      .then(data => {
+        streetsByMahalla = data.streets_by_mahalla || {};
+        refreshStreetCount();
+        // If a mahalla is already shown, refresh it.
+        if (selectedMahallaFeature) {
+          renderMahallaInfo(selectedMahallaFeature);
+        }
+      })
+      .catch(err => {
+        console.warn('streets.json:', err.message, '(brauzerda file:// orqali ochilgan bo‘lsa, lokal HTTP server kerak)');
+      });
 
     const map = L.map('map', { zoomControl: true, preferCanvas: true });
 
@@ -131,6 +192,7 @@
     let currentDistrict = '';
     let filteredMahallas = null;
     let selectedMahallaLayer = null;
+    let selectedMahallaFeature = null;
 
     const districtLayer = L.geoJSON(districts, {
       style: districtFeatureStyle,
@@ -147,11 +209,25 @@
       }
     }).addTo(map);
 
+    function buildPopup(p) {
+      const streets = getStreetsFor(p.mahalla_id);
+      const top = streets.slice(0, 3)
+        .map(s => `<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-top:2px"><span>${escapeHtml(s.name)}</span><span style="font-family:ui-monospace,monospace;color:#166534;background:#dcfce7;padding:1px 6px;border-radius:4px;font-size:10px">${escapeHtml(s.road_code)}</span></div>`)
+        .join('');
+      const more = streets.length > 3 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">… yana ${streets.length - 3} ta ko‘cha</div>` : '';
+      const noStreets = streets.length === 0 ? `<div style="font-size:11px;color:#64748b;margin-top:4px">Ko‘chalar kiritilmagan</div>` : '';
+      return `<b>${escapeHtml(p.mahalla_no)}</b><br><small>${escapeHtml(p.district)}</small>${top ? '<hr style="border:none;border-top:1px solid #e2e8f0;margin:6px 0">' + top : ''}${more}${noStreets}`;
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+    }
+
     const allMahallaLayer = L.geoJSON(mahallas, {
       style: mahallaFeatureStyle,
       onEachFeature: (feature, layer) => {
         const p = feature.properties;
-        layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
+        layer.bindPopup(() => buildPopup(p));
         layer.on('click', () => focusMahallaLayer(layer, feature));
       }
     }).addTo(map);
@@ -190,7 +266,7 @@
         style: mahallaFeatureStyle,
         onEachFeature: (feature, layer) => {
           const p = feature.properties;
-          layer.bindPopup(`<b>${p.mahalla_no}</b><br>Tuman: ${p.district}<br>ID: ${p.mahalla_id}`);
+          layer.bindPopup(() => buildPopup(p));
           layer.on('click', () => focusMahallaLayer(layer, feature));
         }
       }).addTo(map);
@@ -220,18 +296,120 @@
         selectedMahallaLayer.setStyle(mahallaFeatureStyle(selectedMahallaLayer.feature));
       }
       selectedMahallaLayer = layer;
+      selectedMahallaFeature = feature;
       layer.setStyle({ color:'#15803d', weight:2.5, fillOpacity:0.38 });
       layer.bringToFront();
-      const p = feature.properties;
-      setInfo(`<div><b>${p.mahalla_no}</b></div><div>Tuman: ${p.district}</div><div>ID: ${p.mahalla_id}</div>`);
+      renderMahallaInfo(feature);
       map.fitBounds(layer.getBounds(), { padding: [24,24] });
       layer.openPopup();
+    }
+
+    function renderMahallaInfo(feature, highlightCode = null) {
+      const p = feature.properties;
+      const id = String(p.mahalla_id);
+      const streets = getStreetsFor(id);
+
+      const streetsHtml = streets.length
+        ? `<ul class="streets-list">${streets
+            .map((s, idx) => `
+              <li data-street-idx="${idx}">
+                <span>${escapeHtml(s.name)}</span>
+                <span style="display:flex;align-items:center;gap:6px">
+                  <span class="road-code" ${highlightCode && s.road_code === highlightCode ? 'style="outline:2px solid #f59e0b"' : ''}>${escapeHtml(s.road_code)}</span>
+                  ${s._local ? `<button class="delete-btn" data-mfy="${id}" data-street-idx="${idx - (streetsByMahalla[id]?.length || 0)}" title="O'chirish">&times;</button>` : ''}
+                </span>
+              </li>`)
+            .join('')}</ul>`
+        : `<div class="empty-streets">Bu mahalla uchun ko‘chalar hali kiritilmagan.</div>`;
+
+      // Mark local streets for delete buttons
+      streets.forEach((s, i) => {
+        const fromFileCount = (streetsByMahalla[id] || []).length;
+        s._local = i >= fromFileCount;
+      });
+
+      // Re-render with the _local flag (so delete buttons are correct)
+      const finalStreetsHtml = streets.length
+        ? `<ul class="streets-list">${streets
+            .map((s, idx) => {
+              const fromFileCount = (streetsByMahalla[id] || []).length;
+              const localIdx = idx - fromFileCount;
+              const isLocal = localIdx >= 0;
+              const isHighlighted = highlightCode && s.road_code === highlightCode;
+              return `
+                <li>
+                  <span>${escapeHtml(s.name)}</span>
+                  <span style="display:flex;align-items:center;gap:6px">
+                    <span class="road-code"${isHighlighted ? ' style="outline:2px solid #f59e0b"' : ''}>${escapeHtml(s.road_code)}</span>
+                    ${isLocal ? `<button class="delete-btn" data-mfy="${id}" data-local-idx="${localIdx}" title="O'chirish">&times;</button>` : ''}
+                  </span>
+                </li>`;
+            })
+            .join('')}</ul>`
+        : `<div class="empty-streets">Bu mahalla uchun ko‘chalar hali kiritilmagan.</div>`;
+
+      setInfo(`
+        <div><b>${escapeHtml(p.mahalla_no)}</b></div>
+        <div>Tuman: ${escapeHtml(p.district)}</div>
+        <div>ID: ${escapeHtml(p.mahalla_id)}</div>
+        <div class="streets-block">
+          <h4>Ko‘chalar va yo‘l kodlari (${streets.length})</h4>
+          ${finalStreetsHtml}
+          <form class="add-street-form" data-mfy="${id}">
+            <input name="street_name" placeholder="Yangi ko‘cha nomi" required />
+            <input name="road_code" placeholder="Yo‘l kodi (masalan QSH-099)" required />
+            <button type="submit">+ Qo‘shish</button>
+          </form>
+          <details class="legend-help">
+            <summary>Eslatma: ko‘chalar qayerda saqlanadi?</summary>
+            <div>Asosiy ma‘lumotlar <code>streets.json</code> faylida (mahalla_id bo‘yicha). Bu yerdan qo‘shgan ma‘lumotlar faqat brauzerning lokal xotirasida (localStorage) saqlanadi — ularni doimiy qilish uchun <code>streets.json</code> ga ko‘chiring.</div>
+          </details>
+        </div>
+      `);
+
+      // Wire up the add-street form
+      const form = info.querySelector('.add-street-form');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const fd = new FormData(form);
+          const name = String(fd.get('street_name') || '').trim();
+          const code = String(fd.get('road_code') || '').trim();
+          if (!name || !code) return;
+          if (!localStreets[id]) localStreets[id] = [];
+          localStreets[id].push({ name, road_code: code });
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(localStreets));
+          refreshStreetCount();
+          renderMahallaInfo(feature);
+        });
+      }
+
+      // Wire up delete buttons
+      info.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mfyId = btn.dataset.mfy;
+          const localIdx = parseInt(btn.dataset.localIdx, 10);
+          if (!localStreets[mfyId]) return;
+          localStreets[mfyId].splice(localIdx, 1);
+          if (!localStreets[mfyId].length) delete localStreets[mfyId];
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(localStreets));
+          refreshStreetCount();
+          renderMahallaInfo(feature);
+        });
+      });
+    }
+
+    function findStreetMatch(feature, q) {
+      const id = String(feature.properties.mahalla_id);
+      const streets = getStreetsFor(id);
+      return streets.find(s => s.name.toLowerCase().includes(q) || s.road_code.toLowerCase().includes(q));
     }
 
     function matchesSearch(feature) {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return true;
-      return String(feature.properties.mahalla_no || '').toLowerCase().includes(q);
+      if (String(feature.properties.mahalla_no || '').toLowerCase().includes(q)) return true;
+      return Boolean(findStreetMatch(feature, q));
     }
 
     function applySearch() {
@@ -245,7 +423,12 @@
       const first = mahallas.features.find(f => (!currentDistrict || f.properties.district === currentDistrict) && matchesSearch(f));
       if (first) {
         const layer = filteredMahallas.getLayers().find(l => String(l.feature.properties.mahalla_id) === String(first.properties.mahalla_id));
-        if (layer) focusMahallaLayer(layer, first);
+        if (layer) {
+          focusMahallaLayer(layer, first);
+          // If the match was a street/code, highlight it in the info panel
+          const streetMatch = findStreetMatch(first, q);
+          if (streetMatch) renderMahallaInfo(first, streetMatch.road_code);
+        }
       } else {
         setInfo('<b>Qidiruv natijasi topilmadi</b>');
       }
@@ -271,12 +454,13 @@
       districtSelect.value = '';
       searchInput.value = '';
       selectedMahallaLayer = null;
+      selectedMahallaFeature = null;
       if (filteredMahallas) map.removeLayer(filteredMahallas);
       allMahallaLayer.addTo(map);
       filteredMahallas = allMahallaLayer;
       districtLayer.eachLayer(layer => districtLayer.resetStyle(layer));
       map.fitBounds(boundaryLayer.getBounds(), { padding: [12,12] });
-      setInfo('<div class="hint">Xaritadagi hududni bossangiz ma’lumot chiqadi.</div>');
+      setInfo('<div class="hint">Xaritadagi hududni bossangiz ma‘lumot va ko‘chalar ro‘yxati chiqadi.</div>');
       boundaryLayer.bringToFront();
     }
 
