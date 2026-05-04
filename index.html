@@ -70,6 +70,7 @@
       <button id="streetSearchBtn" type="button">Ko'cha topish</button>
       <button id="autoEntryBtn" class="success" type="button" title="Tanlangan mahalla uchun yo'l-chegara kesishishlarini topish">Kirish joylarini aniqlash</button>
       <button id="exportXlsxBtn" class="primary" type="button">Excelga yuklash</button>
+      <button id="bulkExportBtn" class="primary" type="button" title="Har bir mahalla chegarasidan 20 tadan nuqta hisoblab Excelga yuklash">Hamma mahalladan 20 ta nuqta</button>
       <button id="clearEntriesBtn" class="danger" type="button">Hammasini o'chirish</button>
       <button id="resetBtn" class="ghost" type="button">Tozalash</button>
       <button id="satBtn" class="ghost" type="button">Sun'iy yo'ldosh</button>
@@ -604,6 +605,116 @@
       const ts = new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
       XLSX.writeFile(wb, `qashqadaryo_kirish_joylari_${ts}.xlsx`);
       showToast(`${list.length} ta yozuv eksport qilindi.`);
+    });
+
+    // ---------------- Bulk: 20 boundary points per mahalla ----------------
+    const bulkExportBtn = document.getElementById('bulkExportBtn');
+
+    function stripAlt(coords) { return coords.map(ring => ring.map(c => [c[0], c[1]])); }
+    function asTurfPoly(feature) {
+      try {
+        if (feature.geometry.type === 'Polygon') return turf.polygon(stripAlt(feature.geometry.coordinates), feature.properties);
+        if (feature.geometry.type === 'MultiPolygon') return turf.multiPolygon(feature.geometry.coordinates.map(stripAlt), feature.properties);
+      } catch (_) {}
+      return null;
+    }
+    function longestBoundaryLine(feature) {
+      const poly = asTurfPoly(feature);
+      if (!poly) return null;
+      let lines;
+      try {
+        const fc = turf.polygonToLine(poly);
+        lines = fc.type === 'FeatureCollection' ? fc.features : [fc];
+      } catch (_) { return null; }
+      let best = null, bestLen = -1;
+      for (const ln of lines) {
+        if (ln.geometry.type === 'MultiLineString') {
+          for (const seg of ln.geometry.coordinates) {
+            const segLine = turf.lineString(seg);
+            const len = turf.length(segLine, { units: 'kilometers' });
+            if (len > bestLen) { bestLen = len; best = segLine; }
+          }
+        } else if (ln.geometry.type === 'LineString') {
+          const len = turf.length(ln, { units: 'kilometers' });
+          if (len > bestLen) { bestLen = len; best = ln; }
+        }
+      }
+      return best ? { line: best, length: bestLen } : null;
+    }
+    function samplePerimeter(feature, n) {
+      const r = longestBoundaryLine(feature);
+      if (!r) return [];
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const d = (i / n) * r.length;
+        try {
+          const pt = turf.along(r.line, d, { units: 'kilometers' });
+          pts.push({ lng: pt.geometry.coordinates[0], lat: pt.geometry.coordinates[1] });
+        } catch (_) {}
+      }
+      return pts;
+    }
+
+    bulkExportBtn.addEventListener('click', () => {
+      const N = 20;
+      const total = mahallas.features.length;
+      if (!confirm(`${total} ta mahalla x ${N} = ${total*N} ta nuqta hisoblanadi va Excelga yuklanadi. Davom etilsinmi?`)) return;
+      bulkExportBtn.disabled = true;
+      const prev = bulkExportBtn.textContent;
+      bulkExportBtn.textContent = 'Hisoblanmoqda...';
+      // Defer to next tick so the UI repaints
+      setTimeout(() => {
+        try {
+          const rows = [];
+          let idx = 0, skipped = 0;
+          const t0 = performance.now();
+          for (const f of mahallas.features) {
+            const p = f.properties || {};
+            const district = p.district || '';
+            const mahalla = p.mahalla_no || '';
+            const mid = p.mahalla_id || '';
+            const pts = samplePerimeter(f, N);
+            if (pts.length === 0) {
+              skipped++;
+              try {
+                const c = turf.centroid(asTurfPoly(f) || f).geometry.coordinates;
+                rows.push({
+                  '№': ++idx, 'Tuman': district, 'Mahalla': mahalla, 'Mahalla ID': mid,
+                  'Nuqta №': 1, 'Nuqta nomi': `${mahalla} — markaz`,
+                  'Lat': +c[1].toFixed(6), 'Lng': +c[0].toFixed(6),
+                  'Google Maps': `https://www.google.com/maps?q=${c[1].toFixed(6)},${c[0].toFixed(6)}`,
+                  'Manba': 'centroid'
+                });
+              } catch (_) {}
+              continue;
+            }
+            for (let i = 0; i < pts.length; i++) {
+              const pt = pts[i];
+              rows.push({
+                '№': ++idx, 'Tuman': district, 'Mahalla': mahalla, 'Mahalla ID': mid,
+                'Nuqta №': i + 1, 'Nuqta nomi': `${mahalla} — chegara nuqtasi ${i + 1}`,
+                'Lat': +pt.lat.toFixed(6), 'Lng': +pt.lng.toFixed(6),
+                'Google Maps': `https://www.google.com/maps?q=${pt.lat.toFixed(6)},${pt.lng.toFixed(6)}`,
+                'Manba': 'perimetr-teng'
+              });
+            }
+          }
+          const dt = (performance.now() - t0).toFixed(0);
+          const ws = XLSX.utils.json_to_sheet(rows);
+          ws['!cols'] = [{wch:6},{wch:22},{wch:28},{wch:14},{wch:7},{wch:36},{wch:12},{wch:12},{wch:50},{wch:14}];
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Nuqtalar');
+          const ts = new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'-');
+          XLSX.writeFile(wb, `qashqadaryo_har_mahalladan_20_nuqta_${ts}.xlsx`);
+          showToast(`${rows.length} ta yozuv eksport qilindi (${dt}ms, o'tkazib yuborildi: ${skipped}).`, 4000);
+        } catch (e) {
+          console.error(e);
+          showToast('Xato: ' + (e.message || e));
+        } finally {
+          bulkExportBtn.disabled = false;
+          bulkExportBtn.textContent = prev;
+        }
+      }, 30);
     });
 
     // ---------------- Street search (Nominatim) ----------------
